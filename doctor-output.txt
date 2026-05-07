@@ -1,0 +1,26 @@
+Runtime mode doctor: local
+Description: local frontend + local backend, backed by UAT resources
+Backend mode: local
+Frontend mode: local
+Status: blocked
+Source contract: blocked
+Active profile: action_required
+App ready now: false
+
+  backend_source_file          FAIL  Missing consent-protocol/.env
+  frontend_source_file         FAIL  Missing hushh-webapp/.env.local.local
+  backend_source_profile       FAIL  Expected backend runtime mode local but found (unset)
+  frontend_source_profile      FAIL  Expected APP_RUNTIME_PROFILE=local but found (unset)
+  backend_environment          FAIL  Expected ENVIRONMENT=development but found (unset)
+  frontend_environment         FAIL  Expected NEXT_PUBLIC_APP_ENV=development but found (unset)
+  backend_active_file          FAIL  Active backend file is not ready for local runtime. Run: ./bin/hushh env bootstrap
+  frontend_active_file         WARN  Active frontend file is not using local. Run: ./bin/hushh env use --mode local
+  effective_backend_target     FAIL  NEXT_PUBLIC_BACKEND_URL is missing or still a template placeholder
+  effective_frontend_target    FAIL  NEXT_PUBLIC_APP_URL is missing or still a template placeholder
+  backend_frontend_allowlist   FAIL  APP_FRONTEND_ORIGIN is missing or still a template placeholder
+  backend_target_shape         FAIL  local must point NEXT_PUBLIC_BACKEND_URL at localhost/127.0.0.1
+  cloudsql_proxy_binary        WARN  local is not configured for local DB proxying
+  gmail_runtime_readiness      WARN  Missing Gmail backend keys: GMAIL_OAUTH_CLIENT_ID GMAIL_OAUTH_CLIENT_SECRET GMAIL_OAUTH_REDIRECT_URI GMAIL_OAUTH_TOKEN_KEY. Run: bash scripts/env/bootstrap_profiles.sh
+  one_email_kyc_readiness      WARN  Missing One Email KYC runtime keys: ONE_EMAIL_ADDRESS ONE_EMAIL_DELEGATED_USER ONE_EMAIL_PUBSUB_TOPIC ONE_EMAIL_WEBHOOK_AUDIENCE ONE_EMAIL_WEBHOOK_SERVICE_ACCOUNT_EMAIL ONE_EMAIL_WATCH_RENEW_TOKEN ONE_EMAIL_KYC_DEFAULT_SCOPE ONE_EMAIL_KYC_STRICT_CLIENT_ZK_ENABLED=true
+  voice_runtime_readiness      WARN  Missing voice backend keys: OPENAI_API_KEY VOICE_RUNTIME_CONFIG_JSON.realtime_enabled VOICE_RUNTIME_CONFIG_JSON.hosted_voice_enabled VOICE_RUNTIME_CONFIG_JSON.force_realtime VOICE_RUNTIME_CONFIG_JSON.fail_fast VOICE_RUNTIME_CONFIG_JSON.disable_fallbacks. Run: bash scripts/env/bootstrap_profiles.sh
+  legacy_env_files             PASS  Only canonical runtime-mode files are present

@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+"use strict";
+
 const crypto = require("node:crypto");
 const fs = require("node:fs");
 const os = require("node:os");
@@ -14,6 +16,9 @@ const packageName = packageJson.name;
 const packageVersion = packageJson.version;
 const isWindows = process.platform === "win32";
 const args = process.argv.slice(2);
+
+const MIN_PYTHON_MAJOR = 3;
+const MIN_PYTHON_MINOR = 10;
 
 function printUsage() {
   console.log(`${packageName} ${packageVersion}`);
@@ -127,6 +132,11 @@ function runChecked(command, commandArgs, options = {}) {
 }
 
 function findBasePython() {
+  const versionCheck = [
+    "-c",
+    `import sys; sys.exit(0 if sys.version_info >= (${MIN_PYTHON_MAJOR}, ${MIN_PYTHON_MINOR}) else 1)`,
+  ];
+
   const candidates = [];
 
   if (process.env.HUSHH_MCP_PYTHON) {
@@ -141,14 +151,20 @@ function findBasePython() {
   }
 
   for (const candidate of candidates) {
-    const probe = runChecked(candidate.command, [...candidate.args, "--version"]);
-    if (probe.ok) {
+    const probe = spawnSync(
+      candidate.command,
+      [...candidate.args, ...versionCheck],
+      { stdio: "ignore" },
+    );
+    if (!probe.error && probe.status === 0) {
       return candidate;
     }
   }
 
   fatal(
-    "Python 3 is required. Set HUSHH_MCP_PYTHON or install python3/python before running hushh-mcp.",
+    `Python ${MIN_PYTHON_MAJOR}.${MIN_PYTHON_MINOR}+ is required but was not found.\n` +
+    `  • Install Python ${MIN_PYTHON_MAJOR}.${MIN_PYTHON_MINOR}+ and ensure it is on your PATH, or\n` +
+    `  • Set the HUSHH_MCP_PYTHON environment variable to point to a valid interpreter.`,
   );
 }
 
@@ -208,6 +224,9 @@ function ensureBootstrap(runtimeDir) {
       if (stamp.runtimeHash === desiredHash) {
         return { command: pythonExec, args: [] };
       }
+      process.stderr.write(
+        `[hushh-mcp] requirements changed (${stamp.runtimeHash.slice(0, 8)} → ${desiredHash.slice(0, 8)}), rebuilding venv\n`,
+      );
     } catch (error) {
       process.stderr.write(
         `[hushh-mcp] ignoring invalid install stamp at ${stampPath}: ${error.message}\n`,
@@ -217,18 +236,22 @@ function ensureBootstrap(runtimeDir) {
 
   fs.mkdirSync(installRoot, { recursive: true });
 
+  if (fs.existsSync(venvDir)) {
+    process.stderr.write(`[hushh-mcp] removing stale Python runtime at ${venvDir}\n`);
+    fs.rmSync(venvDir, { recursive: true, force: true });
+  }
+
   const basePython = findBasePython();
-  if (!fs.existsSync(pythonExec)) {
-    process.stderr.write(`[hushh-mcp] creating Python runtime in ${venvDir}\n`);
-    const createVenv = runChecked(basePython.command, [
-      ...basePython.args,
-      "-m",
-      "venv",
-      venvDir,
-    ]);
-    if (!createVenv.ok) {
-      fatal("Failed to create Python virtual environment for hushh-mcp.");
-    }
+
+  process.stderr.write(`[hushh-mcp] creating Python runtime in ${venvDir}\n`);
+  const createVenv = runChecked(basePython.command, [
+    ...basePython.args,
+    "-m",
+    "venv",
+    venvDir,
+  ]);
+  if (!createVenv.ok) {
+    fatal("Failed to create Python virtual environment for hushh-mcp.");
   }
 
   const requirementsPath = path.join(runtimeDir, "requirements.txt");
@@ -267,6 +290,10 @@ function ensureBootstrap(runtimeDir) {
 }
 
 function unquote(value) {
+  if (value.length < 2) {
+    return value;
+  }
+  
   if (
     (value.startsWith('"') && value.endsWith('"')) ||
     (value.startsWith("'") && value.endsWith("'"))
@@ -328,45 +355,59 @@ function buildEnv(runtimeDir) {
   return merged;
 }
 
-if (args.includes("--help") || args.includes("-h")) {
-  printUsage();
-  process.exit(0);
-}
-
-if (args.includes("--print-config")) {
-  printConfig();
-  process.exit(0);
-}
-
-if (args.includes("--print-codex-toml")) {
-  printCodexToml();
-  process.exit(0);
-}
-
-if (args.includes("--print-remote-config")) {
-  printRemoteConfig();
-  process.exit(0);
-}
-
-const runtimeDir = resolveRuntimeDir();
-const python = ensureBootstrap(runtimeDir);
-const serverPath = path.join(runtimeDir, "mcp_server.py");
-const childEnv = buildEnv(runtimeDir);
-
-const child = spawn(python.command, [...python.args, serverPath], {
-  cwd: runtimeDir,
-  env: childEnv,
-  stdio: "inherit",
-});
-
-child.on("exit", (code, signal) => {
-  if (signal) {
-    process.kill(process.pid, signal);
-    return;
+if (require.main === module) {
+  if (args.includes("--help") || args.includes("-h")) {
+    printUsage();
+    process.exit(0);
   }
-  process.exit(code ?? 0);
-});
 
-child.on("error", (error) => {
-  fatal(`Failed to launch Python MCP server: ${error.message}`);
-});
+  if (args.includes("--print-config")) {
+    printConfig();
+    process.exit(0);
+  }
+
+  if (args.includes("--print-codex-toml")) {
+    printCodexToml();
+    process.exit(0);
+  }
+
+  if (args.includes("--print-remote-config")) {
+    printRemoteConfig();
+    process.exit(0);
+  }
+
+  const runtimeDir = resolveRuntimeDir();
+  const python = ensureBootstrap(runtimeDir);
+  const serverPath = path.join(runtimeDir, "mcp_server.py");
+  const childEnv = buildEnv(runtimeDir);
+
+  const child = spawn(python.command, [...python.args, serverPath], {
+    cwd: runtimeDir,
+    env: childEnv,
+    stdio: "inherit",
+  });
+
+  child.on("exit", (code, signal) => {
+    if (signal && !isWindows) {
+      process.kill(process.pid, signal);
+      return;
+    }
+    process.exit(code ?? 1);
+  });
+
+  child.on("error", (error) => {
+    fatal(`Failed to launch Python MCP server: ${error.message}`);
+  });
+}
+
+//  Exports for unit testing 
+module.exports = {
+  unquote,
+  parseEnvFile,
+  runtimeHash,
+  venvPythonPath,
+  composePythonPath,
+  findBasePython,
+  MIN_PYTHON_MAJOR,
+  MIN_PYTHON_MINOR,
+};
