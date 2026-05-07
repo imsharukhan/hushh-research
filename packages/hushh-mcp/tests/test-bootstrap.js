@@ -1,11 +1,5 @@
 #!/usr/bin/env node
-// packages/hushh-mcp/tests/test-bootstrap.js
-//
-// Run with:  node --test tests/test-bootstrap.js
-// Or via:    npm test
-//
-// Uses only Node 18+ built-ins (node:test, node:assert, node:fs, node:os,
-// node:path, node:crypto) — zero extra dependencies.
+
 "use strict";
 
 const { describe, it, before, after } = require("node:test");
@@ -15,8 +9,7 @@ const os = require("node:os");
 const path = require("node:path");
 const crypto = require("node:crypto");
 
-// Requiring the bin file in non-CLI mode (require.main !== module) gives us
-// access to every exported helper without starting the MCP server.
+
 const {
   unquote,
   parseEnvFile,
@@ -28,21 +21,16 @@ const {
   MIN_PYTHON_MINOR,
 } = require("../bin/hushh-mcp.js");
 
-// ─── Helper ──────────────────────────────────────────────────────────────────
-
-/** Creates a unique temp directory and returns its path. */
 function makeTmpDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "hushh-mcp-test-"));
 }
 
-/** Recursively removes a directory (no-op if it doesn't exist). */
 function removeTmpDir(dir) {
   if (fs.existsSync(dir)) {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 }
 
-// ─── unquote ─────────────────────────────────────────────────────────────────
 
 describe("unquote", () => {
   it("removes surrounding double-quotes", () => {
@@ -70,12 +58,10 @@ describe("unquote", () => {
   });
 
   it("preserves inner quotes when outer are also quoted", () => {
-    // e.g. '"value with \"inner\""'  → 'value with \"inner\"'
     assert.equal(unquote('"val"ue"'), 'val"ue');
   });
 });
 
-// ─── parseEnvFile ─────────────────────────────────────────────────────────────
 
 describe("parseEnvFile", () => {
   let tmpDir;
@@ -146,13 +132,11 @@ describe("parseEnvFile", () => {
 
   it("value may contain = characters", () => {
     const envPath = path.join(tmpDir, "equals.env");
-    // e.g. a base64 token ending with ==
     fs.writeFileSync(envPath, "TOKEN=abc==\n");
     assert.deepEqual(parseEnvFile(envPath), { TOKEN: "abc==" });
   });
 });
 
-// ─── venvPythonPath ───────────────────────────────────────────────────────────
 
 describe("venvPythonPath", () => {
   it("returns a non-empty string", () => {
@@ -184,7 +168,6 @@ describe("venvPythonPath", () => {
   });
 });
 
-// ─── runtimeHash ─────────────────────────────────────────────────────────────
 
 describe("runtimeHash", () => {
   let tmpDir;
@@ -238,13 +221,12 @@ describe("runtimeHash", () => {
   });
 });
 
-// ─── composePythonPath ────────────────────────────────────────────────────────
 
 describe("composePythonPath", () => {
   const originalPythonPath = process.env.PYTHONPATH;
 
   after(() => {
-    // Restore original env so this test doesn't pollute other suites
+    
     if (originalPythonPath === undefined) {
       delete process.env.PYTHONPATH;
     } else {
