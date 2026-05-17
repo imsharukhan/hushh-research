@@ -1,6 +1,6 @@
 "use client";
 
-import { Children, cloneElement, isValidElement } from "react";
+import { Children, cloneElement, isValidElement, useId } from "react";
 import type { ReactElement, ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { ChevronRight } from "lucide-react";
@@ -101,6 +101,8 @@ export function SettingsGroup({
   embedded?: boolean;
   className?: string;
 }) {
+  const headingId = useId();
+
   const shell = (
     <div
       className={cn(
@@ -114,7 +116,10 @@ export function SettingsGroup({
   );
 
   return (
-    <section className={cn("w-full space-y-[var(--settings-group-stack-gap)]", className)}>
+  <section
+    aria-labelledby={title ? headingId : undefined}
+    className={cn("w-full space-y-[var(--settings-group-stack-gap)]", className)}
+  >
       {eyebrow || title || description ? (
         <div className="space-y-[var(--settings-heading-stack-gap)] px-0.5 sm:px-1">
           {eyebrow ? (
@@ -123,7 +128,10 @@ export function SettingsGroup({
             </p>
           ) : null}
           {title ? (
-            <h2 className="text-pretty text-[13px] font-semibold tracking-tight text-foreground [overflow-wrap:anywhere] sm:text-[14px]">
+            <h2
+              id={headingId}
+              className="text-pretty text-[13px] font-semibold tracking-tight text-foreground [overflow-wrap:anywhere] sm:text-[14px]"
+            >
               {title}
             </h2>
           ) : null}
