@@ -254,6 +254,7 @@ export function DataTable<TData, TValue>({
                 value={globalFilter ?? ""}
                 onChange={(e) => setGlobalFilter(e.target.value)}
                 className="pl-9 cursor-text"
+                autoComplete="off"
               />
             </div>
           ) : null}
