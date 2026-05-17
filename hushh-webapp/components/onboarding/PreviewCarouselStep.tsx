@@ -239,7 +239,11 @@ export function PreviewCarouselStep({ onContinue }: { onContinue: () => void }) 
           </div>
 
           <div className="mt-4 flex flex-col justify-end gap-4">
-            <Dots count={slides.length} activeIndex={selectedIndex} />
+            <Dots
+              count={slides.length}
+              activeIndex={selectedIndex}
+              onDotClick={(i) => api?.scrollTo(i)}
+            />
 
             <Button
               size="lg"
@@ -258,19 +262,31 @@ export function PreviewCarouselStep({ onContinue }: { onContinue: () => void }) 
   );
 }
 
-function Dots(props: { count: number; activeIndex: number }) {
+function Dots(props: {
+  count: number;
+  activeIndex: number;
+  onDotClick: (index: number) => void;
+}) {
   return (
-    <div className="flex items-center justify-center gap-2">
+    <div
+      className="flex items-center justify-center gap-2"
+      role="tablist"
+      aria-label="Carousel slides"
+    >
       {Array.from({ length: props.count }).map((_, i) => (
-        <span
+        <button
           key={i}
+          type="button"
+          role="tab"
+          aria-selected={i === props.activeIndex}
+          aria-label={`Go to slide ${i + 1}`}
+          onClick={() => props.onDotClick(i)}
           className={cn(
-            "h-2 w-2 rounded-full transition-colors",
+            "h-2 w-2 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--morphy-primary-start)] focus-visible:ring-offset-2",
             i === props.activeIndex
               ? "bg-[var(--morphy-primary-start)]"
               : "bg-[var(--morphy-primary-start)]/20"
           )}
-          aria-hidden
         />
       ))}
     </div>
