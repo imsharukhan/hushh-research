@@ -310,7 +310,6 @@ export function DataTable<TData, TValue>({
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    scope="col"
                     className={cn(
                       compact
                         ? "px-[max(10px,calc(var(--data-table-cell-px)-2px))] py-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground"
@@ -421,6 +420,7 @@ export function DataTable<TData, TValue>({
                   <PaginationPrevious
                     href="#"
                     aria-disabled={!table.getCanPreviousPage()}
+                    tabIndex={!table.getCanPreviousPage() ? -1 : undefined}
                     className={cn(
                       !table.getCanPreviousPage() && "pointer-events-none opacity-50"
                     )}
@@ -456,6 +456,7 @@ export function DataTable<TData, TValue>({
                   <PaginationNext
                     href="#"
                     aria-disabled={!table.getCanNextPage()}
+                    tabIndex={!table.getCanNextPage() ? -1 : undefined}
                     className={cn(!table.getCanNextPage() && "pointer-events-none opacity-50")}
                     onClick={(event) => {
                       event.preventDefault();
