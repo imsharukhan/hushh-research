@@ -51,6 +51,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Search } from "lucide-react";
+import { DataTableEmptyState } from "@/components/ui/data-table-empty-state";
 import { surfaceDataTableShellClassName } from "@/lib/morphy-ux/surfaces";
 import { cn } from "@/lib/utils";
 
@@ -366,11 +367,12 @@ export function DataTable<TData, TValue>({
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 px-[var(--data-table-cell-px)] text-center"
-                >
-                  No results.
+                <TableCell colSpan={columns.length} className="p-0">
+                  <DataTableEmptyState
+                    isFiltered={
+                      !!globalFilter || columnFilters.length > 0
+                    }
+                  />
                 </TableCell>
               </TableRow>
             )}
