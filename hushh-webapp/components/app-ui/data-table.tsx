@@ -90,6 +90,7 @@ interface DataTableProps<TData, TValue> {
   tableClassName?: string;
   density?: "default" | "compact";
   stickyHeader?: boolean;
+  mobileHiddenColumns?: string[];
 }
 
 export function DataTable<TData, TValue>({
@@ -110,6 +111,7 @@ export function DataTable<TData, TValue>({
   tableClassName,
   density = "default",
   stickyHeader = false,
+  mobileHiddenColumns,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -314,7 +316,8 @@ export function DataTable<TData, TValue>({
                       compact
                         ? "px-[max(10px,calc(var(--data-table-cell-px)-2px))] py-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground"
                         : "px-[var(--data-table-cell-px)] py-[calc(var(--data-table-cell-py)-1px)]",
-                      header.column.getCanSort() ? "cursor-pointer" : ""
+                      header.column.getCanSort() ? "cursor-pointer" : "",
+                      mobileHiddenColumns?.includes(header.id) && "hidden sm:table-cell"
                     )}
                     onClick={header.column.getToggleSortingHandler()}
                   >
@@ -353,7 +356,8 @@ export function DataTable<TData, TValue>({
                       className={cn(
                         compact
                           ? "px-[max(10px,calc(var(--data-table-cell-px)-2px))] py-2.5 align-middle"
-                          : "px-[var(--data-table-cell-px)] py-[var(--data-table-cell-py)]"
+                          : "px-[var(--data-table-cell-px)] py-[var(--data-table-cell-py)]",
+                        mobileHiddenColumns?.includes(cell.column.id) && "hidden sm:table-cell"
                       )}
                     >
                       {flexRender(
